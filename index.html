@@ -3,89 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bad Apple ASCII Player</title>
+    <title>Bad Apple Neon Hologram Player</title>
     <style>
         body {
-            background-color: black;
-            color: white;
+            /* 완전한 검은색보다 살짝 어두운 남색 배경이 네온 빛을 더 살려줍니다 */
+            background-color: #020205; 
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            font-family: monospace;
-            /* 글자가 깨지거나 흐려지지 않도록 설정 */
             -webkit-font-smoothing: none; 
         }
 
         #ascii-screen {
-            font-size: 10px; 
-            line-height: 10px; 
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 8px; 
+            line-height: 8px; 
+            letter-spacing: 1px; 
             white-space: pre; 
             margin-bottom: 20px;
+            
+            /* 🌟 홀로그램 네온 효과 핵심 코드 🌟 */
+            color: #d4ffff; /* 글자의 중심은 아주 밝은 흰하늘색 */
+            text-shadow: 
+                0 0 2px #fff,
+                0 0 5px #00ffff,   /* 1단 빛 번짐 (시안색) */
+                0 0 10px #00ffff,  /* 2단 빛 번짐 */
+                0 0 20px #00ffff,  /* 3단 빛 번짐 */
+                0 0 40px #0077ff;  /* 4단 넓게 퍼지는 푸른빛 */
         }
 
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
-            background-color: white;
+            background-color: #00ffff; /* 버튼도 네온 색상으로 맞춤 */
             color: black;
+            font-weight: bold;
             border: none;
             border-radius: 5px;
+            box-shadow: 0 0 10px #00ffff; /* 버튼에도 살짝 빛나는 효과 */
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: white;
+            box-shadow: 0 0 20px #ffffff;
+        }
+
+        button:disabled {
+            background-color: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+            color: #888;
         }
 
         #loading {
-            color: yellow;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
             margin-bottom: 10px;
+            font-family: sans-serif;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
+    <div id="loading">홀로그램 데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
-    <button id="play-btn" disabled>재생 / 일시정지</button>
+    <button id="play-btn" disabled>SYSTEM START (재생/정지)</button>
 
     <script>
         const screen = document.getElementById('ascii-screen');
         const playBtn = document.getElementById('play-btn');
         const loadingText = document.getElementById('loading');
         
-        // 오디오 파일 이름이 bad_apple.mp3 라고 가정합니다.
         const audio = new Audio('bad_apple.mp3'); 
         
         let frames = [];
         let isPlaying = false;
         let intervalId;
-        const fps = 30; // 원본 영상과 같은 30 프레임
+        const fps = 30;
 
-        // 1. JSON 데이터 파일 불러오기
-        // 깃허브에 같이 올라간 bad_apple_data.json 파일을 읽어옵니다.
         fetch('bad_apple_data.json')
             .then(response => response.json())
             .then(data => {
                 frames = data;
-                loadingText.style.display = 'none'; // 로딩 메시지 숨기기
-                screen.textContent = "준비 완료! 재생 버튼을 누르세요.";
-                playBtn.disabled = false; // 버튼 활성화
+                loadingText.style.display = 'none';
+                screen.textContent = ">>> SYSTEM READY <<<\nPRESS START BUTTON";
+                playBtn.disabled = false;
             })
             .catch(error => {
-                loadingText.textContent = "데이터를 불러오는데 실패했습니다.";
+                loadingText.textContent = "데이터 로드 실패!";
                 console.error("Error loading JSON:", error);
             });
 
-        // 2. 화면 업데이트 함수
         function renderFrame() {
-            // 오디오의 현재 재생 시간(초)을 기준으로 프레임 번호를 계산합니다.
-            // 이렇게 하면 음악과 영상의 싱크가 정확히 맞습니다.
             let currentFrame = Math.floor(audio.currentTime * fps);
-            
             if (currentFrame < frames.length) {
                 screen.textContent = frames[currentFrame];
             } else {
-                stopPlaying(); // 영상이 끝나면 정지
+                stopPlaying();
             }
         }
 
@@ -101,7 +120,6 @@
             clearInterval(intervalId);
         }
 
-        // 3. 버튼 클릭 이벤트
         playBtn.addEventListener('click', () => {
             if (isPlaying) {
                 stopPlaying();
