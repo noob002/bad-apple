@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bad Apple Neon Hologram Player</title>
     <style>
+        /* 🌟 기본 상태: 홀로그램 네온 모드 🌟 */
         body {
             background-color: #020205; 
             display: flex;
@@ -16,9 +17,10 @@
             -webkit-font-smoothing: none; 
             color: #d4ffff;
             font-family: sans-serif;
+            user-select: none; 
+            transition: all 0.3s ease; /* 테마가 바뀔 때 부드럽게 전환되도록 합니다 */
         }
 
-        /* 아스키 화면 스타일 (기존 네온 효과 유지) */
         #ascii-screen {
             font-family: 'Courier New', Courier, monospace;
             font-size: 8px; 
@@ -26,24 +28,20 @@
             letter-spacing: 1px; 
             white-space: pre; 
             margin-bottom: 20px;
-            text-shadow: 
-                0 0 2px #fff,
-                0 0 5px #00ffff,
-                0 0 10px #00ffff,
-                0 0 20px #00ffff,
-                0 0 40px #0077ff;
+            text-shadow: 0 0 2px #fff, 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #0077ff;
+            transition: all 0.3s ease;
         }
 
-        /* 컨트롤 패널 전체를 감싸는 상자 */
         #controls-container {
             display: flex;
             align-items: center;
-            gap: 15px; /* 요소들 사이의 간격 */
+            gap: 15px;
             background-color: rgba(0, 255, 255, 0.1);
             padding: 10px 20px;
             border-radius: 10px;
             border: 1px solid #00ffff;
             box-shadow: 0 0 10px #00ffff;
+            transition: all 0.3s ease;
         }
 
         button {
@@ -71,24 +69,28 @@
             color: #888;
         }
 
-        /* 진행 바와 볼륨 슬라이더 디자인 (네온 색상 적용) */
-        input[type="range"] {
+        .ascii-slider {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
             cursor: pointer;
-            accent-color: #00ffff; /* 최신 브라우저에서 슬라이더 색상을 쉽게 바꾸는 속성 */
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
         }
 
-        #progress-bar {
-            width: 250px;
-        }
-
-        #volume-slider {
-            width: 80px;
+        .ascii-slider:hover {
+            color: #ffffff;
+            text-shadow: 0 0 10px #ffffff;
         }
 
         #time-display {
             font-size: 14px;
             font-family: 'Courier New', Courier, monospace;
             text-shadow: 0 0 5px #00ffff;
+            width: 90px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
         #loading {
@@ -96,54 +98,107 @@
             text-shadow: 0 0 5px #00ffff;
             margin-bottom: 10px;
         }
+
+        /* 🌟 클래식 모드 상태 (네온 끄기) 🌟 */
+        /* body에 classic-mode 라는 이름표가 붙으면 아래 디자인으로 덮어씌워집니다 */
+        body.classic-mode {
+            background-color: black;
+            color: white;
+        }
+
+        body.classic-mode #ascii-screen {
+            color: white;
+            text-shadow: none; /* 그림자(빛) 완전히 제거 */
+        }
+
+        body.classic-mode #controls-container {
+            background-color: transparent;
+            border: 1px solid white;
+            box-shadow: none;
+        }
+
+        body.classic-mode button {
+            background-color: white;
+            color: black;
+            box-shadow: none;
+        }
+
+        body.classic-mode button:hover {
+            background-color: #cccccc;
+        }
+
+        body.classic-mode .ascii-slider,
+        body.classic-mode #time-display,
+        body.classic-mode #loading {
+            color: white;
+            text-shadow: none;
+        }
+        
+        body.classic-mode .ascii-slider:hover {
+            color: #aaaaaa;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading">홀로그램 데이터를 불러오는 중입니다...</div>
+    <div id="loading">데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
 
     <div id="controls-container">
         <button id="play-btn" disabled>▶ PLAY</button>
         
-        <input type="range" id="progress-bar" value="0" step="0.1" disabled>
+        <span id="ascii-progress" class="ascii-slider">[------------------------------]</span>
         <span id="time-display">0:00 / 0:00</span>
         
-        <span>🔊</span>
-        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+        <span>VOL</span>
+        <span id="ascii-volume" class="ascii-slider">[██████████]</span>
+
+        <button id="neon-btn">NEON: ON</button>
     </div>
 
     <script>
         const screen = document.getElementById('ascii-screen');
         const playBtn = document.getElementById('play-btn');
+        const neonBtn = document.getElementById('neon-btn'); // 스위치 버튼 가져오기
         const loadingText = document.getElementById('loading');
         
-        // 새로 추가된 HTML 요소들 가져오기
-        const progressBar = document.getElementById('progress-bar');
+        const asciiProgress = document.getElementById('ascii-progress');
+        const asciiVolume = document.getElementById('ascii-volume');
         const timeDisplay = document.getElementById('time-display');
-        const volumeSlider = document.getElementById('volume-slider');
         
         const audio = new Audio('bad_apple.mp3'); 
         
         let frames = [];
         let isPlaying = false;
+        let isNeon = true; // 현재 네온 모드인지 기억하는 변수
         let intervalId;
         const fps = 30;
 
-        // 초(seconds)를 분:초(mm:ss) 형식으로 바꿔주는 마법의 함수
+        const progressLen = 30; 
+        const volumeLen = 10;   
+
         function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
             const min = Math.floor(seconds / 60);
             const sec = Math.floor(seconds % 60);
-            return `${min}:${sec.toString().padStart(2, '0')}`; // 초가 1자리일 때 앞에 0을 붙여줍니다
+            return `${min}:${sec.toString().padStart(2, '0')}`;
         }
 
-        // 오디오의 메타데이터(전체 길이 등)가 로드되었을 때 실행
-        audio.addEventListener('loadedmetadata', () => {
-            progressBar.max = audio.duration; // 진행 바의 최대값을 오디오 전체 길이로 설정
-            updateTimeDisplay();
-        });
+        function generateAsciiBar(percent, length, type) {
+            const filledCount = Math.round(percent * length);
+            const emptyCount = length - filledCount;
+            
+            if (type === 'progress') {
+                if (filledCount === 0) return '[' + '-'.repeat(length) + ']';
+                if (filledCount === length) return '[' + '='.repeat(length) + ']';
+                return '[' + '='.repeat(filledCount - 1) + '>' + '-'.repeat(emptyCount) + ']';
+            } else {
+                const fullChar = '█';
+                const emptyChar = '░';
+                return '[' + fullChar.repeat(filledCount) + emptyChar.repeat(emptyCount) + ']';
+            }
+        }
 
-        // 1. JSON 데이터 로드
         fetch('bad_apple_data.json')
             .then(response => response.json())
             .then(data => {
@@ -151,11 +206,9 @@
                 loadingText.style.display = 'none';
                 screen.textContent = ">>> SYSTEM READY <<<\nPRESS START BUTTON";
                 playBtn.disabled = false;
-                progressBar.disabled = false; // 진행 바 활성화
             })
             .catch(error => console.error("Error loading JSON:", error));
 
-        // 2. 화면에 프레임 그리기
         function renderFrame() {
             let currentFrame = Math.floor(audio.currentTime * fps);
             if (currentFrame < frames.length) {
@@ -165,12 +218,6 @@
             }
         }
 
-        // 3. 시간 표시 업데이트 함수
-        function updateTimeDisplay() {
-            timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration || 0)}`;
-        }
-
-        // 4. 재생/정지 제어
         function startPlaying() {
             isPlaying = true;
             playBtn.textContent = '⏸ PAUSE';
@@ -190,24 +237,53 @@
             else startPlaying();
         });
 
-        // 🌟 5. 진행 바(Progress Bar) 제어 🌟
-        // 오디오가 재생되는 동안 계속해서 진행 바 위치와 시간을 업데이트합니다.
-        audio.addEventListener('timeupdate', () => {
-            progressBar.value = audio.currentTime;
-            updateTimeDisplay();
+        // 🌟 네온 스위치 클릭 이벤트 🌟
+        neonBtn.addEventListener('click', () => {
+            isNeon = !isNeon; // 상태를 반대로 뒤집습니다 (true <-> false)
+            
+            if (isNeon) {
+                document.body.classList.remove('classic-mode'); // 클래식 모드 끄기
+                neonBtn.textContent = 'NEON: ON';
+            } else {
+                document.body.classList.add('classic-mode'); // 클래식 모드 켜기
+                neonBtn.textContent = 'NEON: OFF';
+            }
         });
 
-        // 사용자가 진행 바를 마우스로 끌어서 이동시킬 때 (Seek)
-        progressBar.addEventListener('input', () => {
-            audio.currentTime = progressBar.value; // 오디오 재생 위치를 슬라이더 위치로 강제 이동
-            renderFrame(); // 화면도 즉시 해당 위치의 프레임으로 업데이트!
-            updateTimeDisplay();
+        function updateProgress() {
+            if (!audio.duration) return;
+            const percent = audio.currentTime / audio.duration;
+            asciiProgress.textContent = generateAsciiBar(percent, progressLen, 'progress');
+            timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+        }
+
+        audio.addEventListener('timeupdate', updateProgress);
+
+        asciiProgress.addEventListener('click', (e) => {
+            if (!audio.duration) return;
+            const rect = asciiProgress.getBoundingClientRect();
+            let percent = (e.clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent)); 
+            
+            audio.currentTime = percent * audio.duration;
+            renderFrame();
+            updateProgress();
         });
 
-        // 🌟 6. 볼륨(Volume) 제어 🌟
-        volumeSlider.addEventListener('input', () => {
-            audio.volume = volumeSlider.value; // 오디오 볼륨을 슬라이더 값(0~1)으로 설정
+        function updateVolume() {
+            asciiVolume.textContent = generateAsciiBar(audio.volume, volumeLen, 'volume');
+        }
+
+        asciiVolume.addEventListener('click', (e) => {
+            const rect = asciiVolume.getBoundingClientRect();
+            let percent = (e.clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent));
+            
+            audio.volume = percent;
+            updateVolume();
         });
+
+        updateVolume();
 
     </script>
 </body>
