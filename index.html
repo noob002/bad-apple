@@ -2,9 +2,9 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bad Apple ASCII Player</title>
     <style>
-        /* 화면을 검게, 글자를 하얗게 만들어 대비를 줍니다 */
         body {
             background-color: black;
             color: white;
@@ -14,15 +14,15 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            /* 글자 폭이 일정한 폰트를 써야 모양이 안 깨집니다 */
-            font-family: monospace; 
+            font-family: monospace;
+            /* 글자가 깨지거나 흐려지지 않도록 설정 */
+            -webkit-font-smoothing: none; 
         }
 
-        /* ASCII 아트가 표시될 영역 */
         #ascii-screen {
-            font-size: 12px; /* 화면 크기에 맞게 폰트 크기 조절 */
-            line-height: 12px; /* 줄 간격을 폰트 크기와 맞춰 빽빽하게 만듭니다 */
-            white-space: pre; /* 텍스트의 줄바꿈(\n)과 띄어쓰기를 그대로 유지합니다 */
+            font-size: 10px; 
+            line-height: 10px; 
+            white-space: pre; 
             margin-bottom: 20px;
         }
 
@@ -35,64 +35,73 @@
             border: none;
             border-radius: 5px;
         }
+
+        #loading {
+            color: yellow;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="ascii-screen">재생 버튼을 눌러주세요.</div>
-    
-    <button id="play-btn">재생 / 일시정지</button>
+    <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
+    <div id="ascii-screen"></div>
+    <button id="play-btn" disabled>재생 / 일시정지</button>
 
     <script>
-        // 1. 프레임 데이터 준비 (테스트용 샘플 데이터)
-        // 실제로는 이 배열 안에 'Bad Apple'의 수천 개 텍스트 프레임이 들어가야 합니다.
-        // 현재는 원리를 보여주기 위해 네모가 커지는 간단한 4개의 프레임만 넣었습니다.
-        const frames = [
-            "      \n      \n  @@  \n      ",
-            "      \n  @@  \n  @@  \n      ",
-            "  @@  \n  @@  \n  @@  \n      ",
-            "@@@@@@\n@@@@@@\n@@@@@@\n@@@@@@" 
-        ];
-
-        // 2. HTML 요소 가져오기
         const screen = document.getElementById('ascii-screen');
         const playBtn = document.getElementById('play-btn');
-        // const bgm = document.getElementById('bgm'); // 음악 사용할 때 주석 해제
-
-        // 3. 재생 제어를 위한 변수 설정
-        let currentFrame = 0;
+        const loadingText = document.getElementById('loading');
+        
+        // 오디오 파일 이름이 bad_apple.mp3 라고 가정합니다.
+        const audio = new Audio('bad_apple.mp3'); 
+        
+        let frames = [];
         let isPlaying = false;
         let intervalId;
-        const fps = 5; // 초당 프레임 수 (실제 동영상은 보통 30을 씁니다)
+        const fps = 30; // 원본 영상과 같은 30 프레임
 
-        // 4. 화면에 프레임을 그리는 함수
+        // 1. JSON 데이터 파일 불러오기
+        // 깃허브에 같이 올라간 bad_apple_data.json 파일을 읽어옵니다.
+        fetch('bad_apple_data.json')
+            .then(response => response.json())
+            .then(data => {
+                frames = data;
+                loadingText.style.display = 'none'; // 로딩 메시지 숨기기
+                screen.textContent = "준비 완료! 재생 버튼을 누르세요.";
+                playBtn.disabled = false; // 버튼 활성화
+            })
+            .catch(error => {
+                loadingText.textContent = "데이터를 불러오는데 실패했습니다.";
+                console.error("Error loading JSON:", error);
+            });
+
+        // 2. 화면 업데이트 함수
         function renderFrame() {
-            // 프레임 배열의 끝까지 가면 처음으로 되돌립니다 (반복 재생)
-            if (currentFrame >= frames.length) {
-                currentFrame = 0; 
+            // 오디오의 현재 재생 시간(초)을 기준으로 프레임 번호를 계산합니다.
+            // 이렇게 하면 음악과 영상의 싱크가 정확히 맞습니다.
+            let currentFrame = Math.floor(audio.currentTime * fps);
+            
+            if (currentFrame < frames.length) {
+                screen.textContent = frames[currentFrame];
+            } else {
+                stopPlaying(); // 영상이 끝나면 정지
             }
-            // 현재 프레임의 텍스트를 화면에 덮어씌웁니다
-            screen.textContent = frames[currentFrame];
-            currentFrame++; // 다음 프레임으로 이동
         }
 
-        // 5. 재생 시작 함수
         function startPlaying() {
             isPlaying = true;
-            // bgm.play(); // 음악 재생
-            
-            // 1초(1000ms)를 fps로 나눈 시간마다 renderFrame 함수를 실행합니다.
+            audio.play();
             intervalId = setInterval(renderFrame, 1000 / fps);
         }
 
-        // 6. 재생 정지 함수
         function stopPlaying() {
             isPlaying = false;
-            // bgm.pause(); // 음악 정지
-            clearInterval(intervalId); // 반복 실행을 멈춥니다
+            audio.pause();
+            clearInterval(intervalId);
         }
 
-        // 7. 버튼 클릭 이벤트 설정
+        // 3. 버튼 클릭 이벤트
         playBtn.addEventListener('click', () => {
             if (isPlaying) {
                 stopPlaying();
