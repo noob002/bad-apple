@@ -88,23 +88,22 @@
             margin-bottom: 10px;
         }
 
-        /* 🌟 새로 추가된 후원 버튼 스타일 (네온 핑크) 🌟 */
         #donate-btn {
-            position: fixed; /* 화면 스크롤과 상관없이 위치 고정 */
-            top: 20px;       /* 위에서 20px 띄움 */
-            right: 20px;     /* 오른쪽에서 20px 띄움 */
+            position: fixed; 
+            top: 20px;       
+            right: 20px;     
             padding: 10px 15px;
             font-family: 'Courier New', Courier, monospace;
             font-size: 14px;
             font-weight: bold;
-            text-decoration: none; /* 링크 밑줄 제거 */
-            color: #ff00ff; /* 네온 핑크 텍스트 */
+            text-decoration: none; 
+            color: #ff00ff; 
             border: 1px solid #ff00ff;
             border-radius: 5px;
-            box-shadow: 0 0 10px #ff00ff; /* 네온 핑크 빛 번짐 */
+            box-shadow: 0 0 10px #ff00ff; 
             background-color: rgba(255, 0, 255, 0.1);
             transition: all 0.3s ease;
-            z-index: 1000; /* 항상 맨 위에 보이도록 설정 */
+            z-index: 1000; 
         }
 
         #donate-btn:hover {
@@ -113,30 +112,47 @@
             box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
         }
 
-        /* 클래식 모드 일 때의 후원 버튼 색상 (흑백) */
-        body.classic-mode #donate-btn {
-            color: white;
-            border-color: white;
-            background-color: transparent;
-            box-shadow: none;
-        }
-
-        body.classic-mode #donate-btn:hover {
-            background-color: white;
-            color: black;
-        }
-
-        /* 클래식 모드 (나머지 유지) */
+        /* 🌟 클래식 모드 🌟 */
         body.classic-mode { background-color: black; color: white; }
         body.classic-mode #ascii-screen { color: #ddd; text-shadow: none; }
         body.classic-mode #controls-container { background-color: transparent; border: 1px solid white; box-shadow: none; }
         body.classic-mode button { background-color: white; color: black; box-shadow: none; }
         body.classic-mode .ascii-slider, body.classic-mode #time-display, body.classic-mode #loading { color: white; text-shadow: none; }
+        body.classic-mode #donate-btn { color: white; border-color: white; background-color: transparent; box-shadow: none; }
+        body.classic-mode #donate-btn:hover { background-color: white; color: black; }
+
+        /* 🌟 새로 추가된 레인보우 모드 애니메이션 🌟 */
+        @keyframes rainbowGlow {
+            0%   { color: #ff0000; text-shadow: 0 0 5px #ff0000, 0 0 15px #ff0000; }
+            15%  { color: #ff7f00; text-shadow: 0 0 5px #ff7f00, 0 0 15px #ff7f00; }
+            30%  { color: #ffff00; text-shadow: 0 0 5px #ffff00, 0 0 15px #ffff00; }
+            45%  { color: #00ff00; text-shadow: 0 0 5px #00ff00, 0 0 15px #00ff00; }
+            60%  { color: #0000ff; text-shadow: 0 0 5px #0000ff, 0 0 15px #0000ff; }
+            75%  { color: #4b0082; text-shadow: 0 0 5px #4b0082, 0 0 15px #4b0082; }
+            90%  { color: #9400d3; text-shadow: 0 0 5px #9400d3, 0 0 15px #9400d3; }
+            100% { color: #ff0000; text-shadow: 0 0 5px #ff0000, 0 0 15px #ff0000; }
+        }
+
+        /* rainbow-mode 클래스가 붙으면 모든 요소에 무지개 애니메이션을 강제로 덮어씌웁니다 */
+        body.rainbow-mode #ascii-screen,
+        body.rainbow-mode #time-display,
+        body.rainbow-mode .ascii-slider,
+        body.rainbow-mode #loading,
+        body.rainbow-mode #donate-btn,
+        body.rainbow-mode button {
+            animation: rainbowGlow 2s linear infinite !important; /* 2초마다 한 바퀴 돕니다 */
+        }
+
+        body.rainbow-mode #controls-container,
+        body.rainbow-mode button,
+        body.rainbow-mode #donate-btn {
+            background-color: transparent !important; /* 배경색을 투명하게 해서 글자 빛을 살립니다 */
+        }
     </style>
 </head>
 <body>
 
-    <a href="https://paypal.me/hyubjunseo129" target="_blank" id="donate-btn">☕ Donate (PayPal)</a>
+    <a href="https://paypal.me/hyunjunseo129" target="_blank" id="donate-btn">☕ Donate (PayPal)</a>
 
     <div id="loading">HD 데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
@@ -166,7 +182,7 @@
         let isNeon = true;
         let intervalId;
         
-        const fps = 15; // 다이어트 버전 15fps 적용 유지
+        const fps = 15; 
 
         const progressLen = 30; 
         const volumeLen = 10;   
@@ -198,10 +214,7 @@
                 screen.textContent = ">>> HD SYSTEM READY <<<\nPRESS START BUTTON";
                 playBtn.disabled = false;
             })
-            .catch(error => {
-                loadingText.textContent = "데이터 로드 실패!";
-                console.error("Error loading JSON:", error);
-            });
+            .catch(error => console.error("Error loading JSON:", error));
 
         function renderFrame() {
             let currentFrame = Math.floor(audio.currentTime * fps);
@@ -274,6 +287,27 @@
         });
 
         updateVolume();
+
+        // 🌟 새로 추가된 이스터 에그 (레인보우 모드) 스크립트 🌟
+        let secretCode = "";
+        const easterEgg = "rainbow";
+
+        // 사용자가 키보드를 누를 때마다 이 함수가 실행됩니다
+        document.addEventListener('keydown', (e) => {
+            secretCode += e.key.toLowerCase();
+            
+            // 너무 길어지면 앞에 입력한 건 지워버립니다
+            if (secretCode.length > easterEgg.length) {
+                secretCode = secretCode.slice(-easterEgg.length);
+            }
+            
+            // "rainbow"를 정확히 입력했는지 확인!
+            if (secretCode === easterEgg) {
+                document.body.classList.toggle('rainbow-mode');
+                secretCode = ""; // 입력된 글자 초기화 (다시 치면 꺼지도록)
+            }
+        });
+
     </script>
 </body>
 </html>
