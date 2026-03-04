@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bad Apple Neon Hologram Player</title>
+    <title>Bad Apple HD Neon Player</title>
     <style>
-        /* 🌟 기본 상태: 홀로그램 네온 모드 🌟 */
         body {
             background-color: #020205; 
             display: flex;
@@ -14,22 +13,24 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            -webkit-font-smoothing: none; 
+            -webkit-font-smoothing: antialiased; 
             color: #d4ffff;
             font-family: sans-serif;
             user-select: none; 
-            transition: all 0.3s ease; /* 테마가 바뀔 때 부드럽게 전환되도록 합니다 */
+            transition: all 0.3s ease;
         }
 
         #ascii-screen {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 8px; 
-            line-height: 8px; 
-            letter-spacing: 1px; 
+            font-size: 5px;       
+            line-height: 5px;     
+            letter-spacing: 0px;  
             white-space: pre; 
             margin-bottom: 20px;
-            text-shadow: 0 0 2px #fff, 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #0077ff;
+            text-shadow: 0 0 2px #fff, 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff;
             transition: all 0.3s ease;
+            transform-origin: center;
+            transform: scale(1.0); 
         }
 
         #controls-container {
@@ -62,13 +63,6 @@
             box-shadow: 0 0 20px #ffffff;
         }
 
-        button:disabled {
-            background-color: #555;
-            box-shadow: none;
-            cursor: not-allowed;
-            color: #888;
-        }
-
         .ascii-slider {
             font-family: 'Courier New', Courier, monospace;
             font-size: 16px;
@@ -77,11 +71,6 @@
             text-shadow: 0 0 5px #00ffff;
             letter-spacing: 1px;
             transition: all 0.3s ease;
-        }
-
-        .ascii-slider:hover {
-            color: #ffffff;
-            text-shadow: 0 0 10px #ffffff;
         }
 
         #time-display {
@@ -99,69 +88,73 @@
             margin-bottom: 10px;
         }
 
-        /* 🌟 클래식 모드 상태 (네온 끄기) 🌟 */
-        /* body에 classic-mode 라는 이름표가 붙으면 아래 디자인으로 덮어씌워집니다 */
-        body.classic-mode {
-            background-color: black;
-            color: white;
+        /* 🌟 새로 추가된 후원 버튼 스타일 (네온 핑크) 🌟 */
+        #donate-btn {
+            position: fixed; /* 화면 스크롤과 상관없이 위치 고정 */
+            top: 20px;       /* 위에서 20px 띄움 */
+            right: 20px;     /* 오른쪽에서 20px 띄움 */
+            padding: 10px 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none; /* 링크 밑줄 제거 */
+            color: #ff00ff; /* 네온 핑크 텍스트 */
+            border: 1px solid #ff00ff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #ff00ff; /* 네온 핑크 빛 번짐 */
+            background-color: rgba(255, 0, 255, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000; /* 항상 맨 위에 보이도록 설정 */
         }
 
-        body.classic-mode #ascii-screen {
+        #donate-btn:hover {
+            background-color: #ff00ff;
             color: white;
-            text-shadow: none; /* 그림자(빛) 완전히 제거 */
+            box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
         }
 
-        body.classic-mode #controls-container {
+        /* 클래식 모드 일 때의 후원 버튼 색상 (흑백) */
+        body.classic-mode #donate-btn {
+            color: white;
+            border-color: white;
             background-color: transparent;
-            border: 1px solid white;
             box-shadow: none;
         }
 
-        body.classic-mode button {
+        body.classic-mode #donate-btn:hover {
             background-color: white;
             color: black;
-            box-shadow: none;
         }
 
-        body.classic-mode button:hover {
-            background-color: #cccccc;
-        }
-
-        body.classic-mode .ascii-slider,
-        body.classic-mode #time-display,
-        body.classic-mode #loading {
-            color: white;
-            text-shadow: none;
-        }
-        
-        body.classic-mode .ascii-slider:hover {
-            color: #aaaaaa;
-        }
+        /* 클래식 모드 (나머지 유지) */
+        body.classic-mode { background-color: black; color: white; }
+        body.classic-mode #ascii-screen { color: #ddd; text-shadow: none; }
+        body.classic-mode #controls-container { background-color: transparent; border: 1px solid white; box-shadow: none; }
+        body.classic-mode button { background-color: white; color: black; box-shadow: none; }
+        body.classic-mode .ascii-slider, body.classic-mode #time-display, body.classic-mode #loading { color: white; text-shadow: none; }
     </style>
 </head>
 <body>
 
-    <div id="loading">데이터를 불러오는 중입니다...</div>
+    <a href="https://paypal.me/본인의페이팔아이디" target="_blank" id="donate-btn">☕ Donate (PayPal)</a>
+
+    <div id="loading">HD 데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
 
     <div id="controls-container">
         <button id="play-btn" disabled>▶ PLAY</button>
-        
         <span id="ascii-progress" class="ascii-slider">[------------------------------]</span>
         <span id="time-display">0:00 / 0:00</span>
-        
         <span>VOL</span>
         <span id="ascii-volume" class="ascii-slider">[██████████]</span>
-
         <button id="neon-btn">NEON: ON</button>
     </div>
 
     <script>
         const screen = document.getElementById('ascii-screen');
         const playBtn = document.getElementById('play-btn');
-        const neonBtn = document.getElementById('neon-btn'); // 스위치 버튼 가져오기
+        const neonBtn = document.getElementById('neon-btn');
         const loadingText = document.getElementById('loading');
-        
         const asciiProgress = document.getElementById('ascii-progress');
         const asciiVolume = document.getElementById('ascii-volume');
         const timeDisplay = document.getElementById('time-display');
@@ -170,9 +163,10 @@
         
         let frames = [];
         let isPlaying = false;
-        let isNeon = true; // 현재 네온 모드인지 기억하는 변수
+        let isNeon = true;
         let intervalId;
-        const fps = 15;
+        
+        const fps = 15; // 다이어트 버전 15fps 적용 유지
 
         const progressLen = 30; 
         const volumeLen = 10;   
@@ -187,15 +181,12 @@
         function generateAsciiBar(percent, length, type) {
             const filledCount = Math.round(percent * length);
             const emptyCount = length - filledCount;
-            
             if (type === 'progress') {
                 if (filledCount === 0) return '[' + '-'.repeat(length) + ']';
                 if (filledCount === length) return '[' + '='.repeat(length) + ']';
                 return '[' + '='.repeat(filledCount - 1) + '>' + '-'.repeat(emptyCount) + ']';
             } else {
-                const fullChar = '█';
-                const emptyChar = '░';
-                return '[' + fullChar.repeat(filledCount) + emptyChar.repeat(emptyCount) + ']';
+                return '[' + '█'.repeat(filledCount) + '░'.repeat(emptyCount) + ']';
             }
         }
 
@@ -204,10 +195,13 @@
             .then(data => {
                 frames = data;
                 loadingText.style.display = 'none';
-                screen.textContent = ">>> SYSTEM READY <<<\nPRESS START BUTTON";
+                screen.textContent = ">>> HD SYSTEM READY <<<\nPRESS START BUTTON";
                 playBtn.disabled = false;
             })
-            .catch(error => console.error("Error loading JSON:", error));
+            .catch(error => {
+                loadingText.textContent = "데이터 로드 실패!";
+                console.error("Error loading JSON:", error);
+            });
 
         function renderFrame() {
             let currentFrame = Math.floor(audio.currentTime * fps);
@@ -237,15 +231,13 @@
             else startPlaying();
         });
 
-        // 🌟 네온 스위치 클릭 이벤트 🌟
         neonBtn.addEventListener('click', () => {
-            isNeon = !isNeon; // 상태를 반대로 뒤집습니다 (true <-> false)
-            
+            isNeon = !isNeon;
             if (isNeon) {
-                document.body.classList.remove('classic-mode'); // 클래식 모드 끄기
+                document.body.classList.remove('classic-mode');
                 neonBtn.textContent = 'NEON: ON';
             } else {
-                document.body.classList.add('classic-mode'); // 클래식 모드 켜기
+                document.body.classList.add('classic-mode');
                 neonBtn.textContent = 'NEON: OFF';
             }
         });
@@ -263,8 +255,7 @@
             if (!audio.duration) return;
             const rect = asciiProgress.getBoundingClientRect();
             let percent = (e.clientX - rect.left) / rect.width;
-            percent = Math.max(0, Math.min(1, percent)); 
-            
+            percent = Math.max(0, Math.min(1, percent));
             audio.currentTime = percent * audio.duration;
             renderFrame();
             updateProgress();
@@ -278,13 +269,11 @@
             const rect = asciiVolume.getBoundingClientRect();
             let percent = (e.clientX - rect.left) / rect.width;
             percent = Math.max(0, Math.min(1, percent));
-            
             audio.volume = percent;
             updateVolume();
         });
 
         updateVolume();
-
     </script>
 </body>
 </html>
