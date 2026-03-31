@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bad Apple HD Neon Player</title>
+    <title>Bad Apple HD Player</title>
     <style>
         body {
             background-color: #020205; 
@@ -71,6 +71,7 @@
             text-shadow: 0 0 5px #00ffff;
             letter-spacing: 1px;
             transition: all 0.3s ease;
+            touch-action: none; 
         }
 
         #time-display {
@@ -112,7 +113,9 @@
             box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
         }
 
-        /* 🌟 클래식 모드 🌟 */
+        /* =========================================
+           🌟 클래식 모드 (이제 이게 기본 상태가 됩니다) 🌟 
+           ========================================= */
         body.classic-mode { background-color: black; color: white; }
         body.classic-mode #ascii-screen { color: #ddd; text-shadow: none; }
         body.classic-mode #controls-container { background-color: transparent; border: 1px solid white; box-shadow: none; }
@@ -121,7 +124,7 @@
         body.classic-mode #donate-btn { color: white; border-color: white; background-color: transparent; box-shadow: none; }
         body.classic-mode #donate-btn:hover { background-color: white; color: black; }
 
-        /* 🌟 새로 추가된 레인보우 모드 애니메이션 🌟 */
+        /* 레인보우 모드 (이스터 에그) */
         @keyframes rainbowGlow {
             0%   { color: #ff0000; text-shadow: 0 0 5px #ff0000, 0 0 15px #ff0000; }
             15%  { color: #ff7f00; text-shadow: 0 0 5px #ff7f00, 0 0 15px #ff7f00; }
@@ -133,26 +136,17 @@
             100% { color: #ff0000; text-shadow: 0 0 5px #ff0000, 0 0 15px #ff0000; }
         }
 
-        /* rainbow-mode 클래스가 붙으면 모든 요소에 무지개 애니메이션을 강제로 덮어씌웁니다 */
-        body.rainbow-mode #ascii-screen,
-        body.rainbow-mode #time-display,
-        body.rainbow-mode .ascii-slider,
-        body.rainbow-mode #loading,
-        body.rainbow-mode #donate-btn,
-        body.rainbow-mode button {
-            animation: rainbowGlow 2s linear infinite !important; /* 2초마다 한 바퀴 돕니다 */
+        body.rainbow-mode #ascii-screen, body.rainbow-mode #time-display, body.rainbow-mode .ascii-slider, body.rainbow-mode #loading, body.rainbow-mode #donate-btn, body.rainbow-mode button {
+            animation: rainbowGlow 2s linear infinite !important; 
         }
-
-        body.rainbow-mode #controls-container,
-        body.rainbow-mode button,
-        body.rainbow-mode #donate-btn {
-            background-color: transparent !important; /* 배경색을 투명하게 해서 글자 빛을 살립니다 */
+        body.rainbow-mode #controls-container, body.rainbow-mode button, body.rainbow-mode #donate-btn {
+            background-color: transparent !important; 
         }
     </style>
 </head>
-<body>
+<body class="classic-mode">
 
-    <a href="https://paypal.me/hyunjunseo129" target="_blank" id="donate-btn">☕ Donate (PayPal)</a>
+    <a href="https://paypal.me/@hyunjunseo129" target="_blank" id="donate-btn">☕ Donate (PayPal)</a>
 
     <div id="loading">HD 데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
@@ -163,7 +157,7 @@
         <span id="time-display">0:00 / 0:00</span>
         <span>VOL</span>
         <span id="ascii-volume" class="ascii-slider">[██████████]</span>
-        <button id="neon-btn">NEON: ON</button>
+        <button id="neon-btn">NEON: OFF</button>
     </div>
 
     <script>
@@ -179,11 +173,11 @@
         
         let frames = [];
         let isPlaying = false;
-        let isNeon = true;
+        // 🌟 변경점 3: 네온 상태를 꺼짐(false)으로 시작합니다 🌟
+        let isNeon = false; 
         let intervalId;
         
         const fps = 15; 
-
         const progressLen = 30; 
         const volumeLen = 10;   
 
@@ -264,47 +258,90 @@
 
         audio.addEventListener('timeupdate', updateProgress);
 
-        asciiProgress.addEventListener('click', (e) => {
-            if (!audio.duration) return;
-            const rect = asciiProgress.getBoundingClientRect();
-            let percent = (e.clientX - rect.left) / rect.width;
-            percent = Math.max(0, Math.min(1, percent));
-            audio.currentTime = percent * audio.duration;
-            renderFrame();
-            updateProgress();
-        });
-
         function updateVolume() {
             asciiVolume.textContent = generateAsciiBar(audio.volume, volumeLen, 'volume');
         }
 
-        asciiVolume.addEventListener('click', (e) => {
+        updateVolume();
+
+        // --- 실시간 드래그(Scrubbing) 로직 ---
+        let isDraggingProgress = false;
+        let wasPlayingBeforeDrag = false;
+
+        function setProgressFromPointer(e) {
+            if (!audio.duration) return;
+            const rect = asciiProgress.getBoundingClientRect();
+            let percent = (e.clientX - rect.left) / rect.width;
+            percent = Math.max(0, Math.min(1, percent)); 
+            
+            audio.currentTime = percent * audio.duration;
+            renderFrame(); 
+            updateProgress(); 
+        }
+
+        asciiProgress.addEventListener('pointerdown', (e) => {
+            isDraggingProgress = true;
+            asciiProgress.setPointerCapture(e.pointerId); 
+            wasPlayingBeforeDrag = isPlaying;
+            if (isPlaying) stopPlaying(); 
+            setProgressFromPointer(e);
+        });
+
+        asciiProgress.addEventListener('pointermove', (e) => {
+            if (isDraggingProgress) {
+                setProgressFromPointer(e);
+            }
+        });
+
+        asciiProgress.addEventListener('pointerup', (e) => {
+            if (isDraggingProgress) {
+                isDraggingProgress = false;
+                asciiProgress.releasePointerCapture(e.pointerId);
+                if (wasPlayingBeforeDrag) startPlaying(); 
+            }
+        });
+
+        let isDraggingVolume = false;
+
+        function setVolumeFromPointer(e) {
             const rect = asciiVolume.getBoundingClientRect();
             let percent = (e.clientX - rect.left) / rect.width;
             percent = Math.max(0, Math.min(1, percent));
+            
             audio.volume = percent;
             updateVolume();
+        }
+
+        asciiVolume.addEventListener('pointerdown', (e) => {
+            isDraggingVolume = true;
+            asciiVolume.setPointerCapture(e.pointerId);
+            setVolumeFromPointer(e);
         });
 
-        updateVolume();
+        asciiVolume.addEventListener('pointermove', (e) => {
+            if (isDraggingVolume) {
+                setVolumeFromPointer(e);
+            }
+        });
 
-        // 🌟 새로 추가된 이스터 에그 (레인보우 모드) 스크립트 🌟
+        asciiVolume.addEventListener('pointerup', (e) => {
+            if (isDraggingVolume) {
+                isDraggingVolume = false;
+                asciiVolume.releasePointerCapture(e.pointerId);
+            }
+        });
+
+        // --- 이스터 에그 (레인보우 모드) ---
         let secretCode = "";
         const easterEgg = "rainbow";
-
-        // 사용자가 키보드를 누를 때마다 이 함수가 실행됩니다
         document.addEventListener('keydown', (e) => {
             secretCode += e.key.toLowerCase();
-            
-            // 너무 길어지면 앞에 입력한 건 지워버립니다
             if (secretCode.length > easterEgg.length) {
                 secretCode = secretCode.slice(-easterEgg.length);
             }
-            
-            // "rainbow"를 정확히 입력했는지 확인!
             if (secretCode === easterEgg) {
                 document.body.classList.toggle('rainbow-mode');
-                secretCode = ""; // 입력된 글자 초기화 (다시 치면 꺼지도록)
+                secretCode = ""; 
             }
         });
 
