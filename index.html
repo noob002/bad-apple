@@ -113,9 +113,7 @@
             box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
         }
 
-        /* =========================================
-           🌟 클래식 모드 (이제 이게 기본 상태가 됩니다) 🌟 
-           ========================================= */
+        /* 🌟 클래식 모드 🌟 */
         body.classic-mode { background-color: black; color: white; }
         body.classic-mode #ascii-screen { color: #ddd; text-shadow: none; }
         body.classic-mode #controls-container { background-color: transparent; border: 1px solid white; box-shadow: none; }
@@ -124,7 +122,7 @@
         body.classic-mode #donate-btn { color: white; border-color: white; background-color: transparent; box-shadow: none; }
         body.classic-mode #donate-btn:hover { background-color: white; color: black; }
 
-        /* 레인보우 모드 (이스터 에그) */
+        /* 🌟 레인보우 모드 (이스터 에그) 🌟 */
         @keyframes rainbowGlow {
             0%   { color: #ff0000; text-shadow: 0 0 5px #ff0000, 0 0 15px #ff0000; }
             15%  { color: #ff7f00; text-shadow: 0 0 5px #ff7f00, 0 0 15px #ff7f00; }
@@ -146,7 +144,7 @@
 </head>
 <body class="classic-mode">
 
-    <a href="https://paypal.me/@hyunjunseo129/4USD" target="_blank" id="donate-btn">☕ Donate $4(PayPal)</a>
+    <a href="https://paypal.me/@hyunjunseo129/4USD" target="_blank" id="donate-btn">☕ Buy me a Coffee ($4)</a>
 
     <div id="loading">HD 데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
@@ -173,7 +171,6 @@
         
         let frames = [];
         let isPlaying = false;
-        // 🌟 변경점 3: 네온 상태를 꺼짐(false)으로 시작합니다 🌟
         let isNeon = false; 
         let intervalId;
         
