@@ -113,7 +113,6 @@
             box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
         }
 
-        /* 🌟 클래식 모드 🌟 */
         body.classic-mode { background-color: black; color: white; }
         body.classic-mode #ascii-screen { color: #ddd; text-shadow: none; }
         body.classic-mode #controls-container { background-color: transparent; border: 1px solid white; box-shadow: none; }
@@ -122,7 +121,6 @@
         body.classic-mode #donate-btn { color: white; border-color: white; background-color: transparent; box-shadow: none; }
         body.classic-mode #donate-btn:hover { background-color: white; color: black; }
 
-        /* 🌟 레인보우 모드 (이스터 에그) 🌟 */
         @keyframes rainbowGlow {
             0%   { color: #ff0000; text-shadow: 0 0 5px #ff0000, 0 0 15px #ff0000; }
             15%  { color: #ff7f00; text-shadow: 0 0 5px #ff7f00, 0 0 15px #ff7f00; }
@@ -144,17 +142,17 @@
 </head>
 <body class="classic-mode">
 
-    <a href="https://paypal.me/hyunjunseo129/4" target="_blank" id="donate-btn">☕ Buy me a Coffee ($4)</a>
+    <a href="https://paypal.me/본인의페이팔아이디" target="_blank" id="donate-btn">☕ Support Developer</a>
 
     <div id="loading">HD 데이터를 불러오는 중입니다...</div>
     <div id="ascii-screen"></div>
 
     <div id="controls-container">
         <button id="play-btn" disabled>▶ PLAY</button>
-        <span id="ascii-progress" class="ascii-slider">[------------------------------]</span>
+        <span id="ascii-progress" class="ascii-slider">[                                        ]</span>
         <span id="time-display">0:00 / 0:00</span>
         <span>VOL</span>
-        <span id="ascii-volume" class="ascii-slider">[██████████]</span>
+        <span id="ascii-volume" class="ascii-slider">[               ]</span>
         <button id="neon-btn">NEON: OFF</button>
     </div>
 
@@ -175,8 +173,10 @@
         let intervalId;
         
         const fps = 15; 
-        const progressLen = 30; 
-        const volumeLen = 10;   
+        
+        // 🌟 바 길이를 늘려서 세밀함을 더했습니다 🌟
+        const progressLen = 40; 
+        const volumeLen = 15;   
 
         function formatTime(seconds) {
             if (isNaN(seconds)) return "0:00";
@@ -185,16 +185,28 @@
             return `${min}:${sec.toString().padStart(2, '0')}`;
         }
 
-        function generateAsciiBar(percent, length, type) {
-            const filledCount = Math.round(percent * length);
-            const emptyCount = length - filledCount;
-            if (type === 'progress') {
-                if (filledCount === 0) return '[' + '-'.repeat(length) + ']';
-                if (filledCount === length) return '[' + '='.repeat(length) + ']';
-                return '[' + '='.repeat(filledCount - 1) + '>' + '-'.repeat(emptyCount) + ']';
-            } else {
-                return '[' + '█'.repeat(filledCount) + '░'.repeat(emptyCount) + ']';
+        // 🌟 핵심 마법: 8단계 소수점 블록 렌더링 함수 🌟
+        function generateSmoothAsciiBar(percent, length) {
+            // 빈 공간부터 꽉 찬 네모까지 8단계의 특수 문자 배열
+            const fractions = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉'];
+            const fullChar = '█';
+            const emptyChar = ' '; 
+
+            const fillAmount = percent * length;
+            const fullBlocks = Math.floor(fillAmount);
+            
+            if (fullBlocks >= length) {
+                return '[' + fullChar.repeat(length) + ']';
             }
+
+            // 소수점 부분을 계산하여 8단계 중 어느 문자를 쓸지 결정
+            const fractionIndex = Math.floor((fillAmount - fullBlocks) * fractions.length);
+            
+            const fullStr = fullChar.repeat(fullBlocks);
+            const fracStr = fractions[fractionIndex];
+            const emptyStr = emptyChar.repeat(Math.max(0, length - fullBlocks - 1));
+
+            return '[' + fullStr + fracStr + emptyStr + ']';
         }
 
         fetch('bad_apple_data.json')
@@ -249,17 +261,25 @@
         function updateProgress() {
             if (!audio.duration) return;
             const percent = audio.currentTime / audio.duration;
-            asciiProgress.textContent = generateAsciiBar(percent, progressLen, 'progress');
+            asciiProgress.textContent = generateSmoothAsciiBar(percent, progressLen);
             timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
         }
 
-        audio.addEventListener('timeupdate', updateProgress);
-
         function updateVolume() {
-            asciiVolume.textContent = generateAsciiBar(audio.volume, volumeLen, 'volume');
+            asciiVolume.textContent = generateSmoothAsciiBar(audio.volume, volumeLen);
         }
 
         updateVolume();
+
+        // 🌟 핵심 마법 2: 초고속(60FPS) 화면 주사율 UI 업데이트 🌟
+        // 기본 timeupdate 이벤트 대신, 브라우저의 애니메이션 프레임을 사용해 잔상 없이 렌더링합니다.
+        function animateUI() {
+            if (isPlaying || isDraggingProgress) {
+                updateProgress();
+            }
+            requestAnimationFrame(animateUI);
+        }
+        requestAnimationFrame(animateUI); // 무한 루프 시작
 
         // --- 실시간 드래그(Scrubbing) 로직 ---
         let isDraggingProgress = false;
